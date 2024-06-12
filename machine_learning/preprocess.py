@@ -80,3 +80,14 @@ def crop_and_resize(filename, output_dir, target_size_kb=300):
             f.write(encoded_img)
     except Exception as e:
         print(f"Error saving image {output_path}: {e}")
+
+
+# Directory paths
+input_directory = '.\\dataset\\train'
+output_directory = '.\\dataset\\processed\\train'
+
+for root, dirs, files in os.walk(input_directory):
+    for filename in files:
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            file_path = os.path.join(root, filename)
+            crop_and_resize(file_path, output_directory)

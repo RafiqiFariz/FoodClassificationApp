@@ -1,16 +1,27 @@
+import os
+import sys
+import requests
+import numpy as np
+from PIL import Image
+from io import BytesIO
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+
+load_dotenv()
+
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
-import numpy as np
-import requests
-from io import BytesIO
-from PIL import Image
+
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 app = FastAPI()
 
 # Load the pre-trained model
-model = load_model('../machine_learning/FoodCF.keras')
+model_path = os.path.abspath('../machine_learning/FoodCF.keras')
+model = load_model(model_path)
 
 # Define your food labels based on the provided list
 food_labels = {
@@ -36,20 +47,29 @@ food_labels = {
     19: "mango"
 }
 
-# API endpoint and API key for nutrition API
-API_URL = 'https://api.api-ninjas.com/v1/nutrition'
-API_KEY = 'XMlFID9DOtn1reCWUBwswg==WNa6ZlNxcWKFfDUU'
+API_URL = os.getenv('API_URL')
+API_KEY = os.getenv('API_KEY')
 
-@app.post("/predict/")
+
+@app.get("/")
+def index():
+    return {
+        "name": "Food Recognition API",
+        "version": "1.0",
+        "status": 200
+    }
+
+
+@app.post("/predict")
 async def predict_food(file: UploadFile = File(...)):
     try:
         # Read the image file
         contents = await file.read()
         img = Image.open(BytesIO(contents))
-        
+
         # Resize the image to match the input size expected by the model
         img = img.resize((224, 224))
-        
+
         img_array = image.img_to_array(img)
         img_array = np.expand_dims(img_array, axis=0)
         img_array = img_array / 255.0  # Rescale the image
@@ -57,6 +77,17 @@ async def predict_food(file: UploadFile = File(...)):
         # Predict the food item
         predictions = model.predict(img_array)
         predicted_class = np.argmax(predictions[0])
+        max_probability = np.max(predictions[0])
+
+        # Set a threshold for the confidence level
+        confidence_threshold = 0.5
+
+        # Check if the highest probability is below the threshold
+        if max_probability < confidence_threshold:
+            return JSONResponse(status_code=404, content={
+                "status": "error",
+                "message": "Food item not recognized."
+            })
 
         # Map the predicted class to the food name
         food_name = food_labels.get(predicted_class, "Unknown")
@@ -85,6 +116,7 @@ async def predict_food(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 def get_calories_from_api(food_name):
     try:
         query = f'{food_name} calories'
@@ -96,6 +128,8 @@ def get_calories_from_api(food_name):
     except Exception as e:
         print(f"Error while querying API: {str(e)}")
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
