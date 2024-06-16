@@ -10,7 +10,7 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [useCamera, setUseCamera] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
-
+  const [loading, setLoading] = useState(false); // [1
   const webcamRef = useRef(null);
 
   const handleFileChange = (event) => {
@@ -43,18 +43,24 @@ export default function Home() {
     formData.append('file', selectedFile);
 
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:8000/predict', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      const { food_name, nutrition, image } = response.data;
-      setResult({ food_name, nutrition, image });
+      const data = response.data;
+      if (data.status === 'success') {
+        setLoading(false);
+        setResult(data);
+      }
+      setResult(data);
       setError(null);
     } catch (error) {
-      setError('Error recognizing the food item. Please try again.');
+      setError('Error recognizing the food item. Please try again.', error);
       setResult(null);
+      setLoading(false);
     }
   };
 
@@ -70,9 +76,9 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="flex flex-col items-center">
             <div className="mb-4 w-full">
               <label className="block text-sm font-medium text-gray-700 mb-2">Upload an Image or Use Camera</label>
-              <input 
-                type="file" 
-                onChange={handleFileChange} 
+              <input
+                type="file"
+                onChange={handleFileChange}
                 className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer focus:outline-none mb-4"
               />
               <button
@@ -114,14 +120,28 @@ export default function Home() {
               )}
             </div>
             <button type="submit" className="w-full px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-300">
-              Predict
+              {
+                loading ? 'Loading...' : 'Predict Food'
+              }
             </button>
             {result && (
-              <div className="mt-8 flex flex-col items-center">
-                <img src={`data:image/jpeg;base64,${result.image}`} alt="Predicted Food" className="w-96 h-auto" />
+              <div className="mt-8 flex flex-col items-center w-full">
+                {/* <img src={`data:image/jpeg;base64,${result.image}`} alt="Predicted Food" className="w-96 h-auto" /> */}
                 <h2 className="text-2xl font-semibold text-center text-gray-800 mt-4">Prediction Result</h2>
                 <p className="mt-2 text-center text-gray-600">Food Name: {result.food_name}</p>
-                <p className="mt-1 text-center text-gray-600">Nutrition: {result.nutrition}</p>
+                <div className="mt-4 text-center text-gray-600 flex flex-col justify-start items-start w-full">
+                  <p>Calories: {result.nutrition.calories}</p>
+                  <p>Carbohydrates: {result.nutrition.carbohydrates_total_g} g</p>
+                  <p>Cholesterol: {result.nutrition.cholesterol_mg} mg</p>
+                  <p>Total Fat: {result.nutrition.fat_total_g} g</p>
+                  <p>Saturated Fat: {result.nutrition.fat_saturated_g} g</p>
+                  <p>Fiber: {result.nutrition.fiber_g} g</p>
+                  <p>Potassium: {result.nutrition.potassium_mg} mg</p>
+                  <p>Protein: {result.nutrition.protein_g} g</p>
+                  <p>Serving Size: {result.nutrition.serving_size_g} g</p>
+                  <p>Sodium: {result.nutrition.sodium_mg} mg</p>
+                  <p>Sugar: {result.nutrition.sugar_g} g</p>
+                </div>
               </div>
             )}
           </form>

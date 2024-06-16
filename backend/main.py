@@ -7,7 +7,7 @@ from io import BytesIO
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
@@ -18,6 +18,16 @@ from tensorflow.keras.preprocessing import image
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load the pre-trained model
 model_path = os.path.abspath('../machine_learning/FoodCF.keras')
@@ -65,8 +75,8 @@ async def predict_food(file: UploadFile = File(...)):
     try:
         # Read the image file
         contents = await file.read()
-        img = Image.open(BytesIO(contents))
-
+        img = Image.open(BytesIO(contents)).convert('RGB')  # Convert image to RGB
+        
         # Resize the image to match the input size expected by the model
         img = img.resize((224, 224))
 
