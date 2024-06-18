@@ -126,23 +126,66 @@ export default function Home() {
             </button>
             {result && (
               <div className="mt-8 flex flex-col items-center w-full">
-                {/* <img src={`data:image/jpeg;base64,${result.image}`} alt="Predicted Food" className="w-96 h-auto" /> */}
                 <h2 className="text-2xl font-semibold text-center text-gray-800 mt-4">Prediction Result</h2>
-                <p className="mt-2 text-center text-gray-600">Food Name: {result.food_name}</p>
-                <div className="mt-4 text-center text-gray-600 flex flex-col justify-start items-start w-full">
-                  <p>Calories: {result.nutrition.calories}</p>
-                  <p>Carbohydrates: {result.nutrition.carbohydrates_total_g} g</p>
-                  <p>Cholesterol: {result.nutrition.cholesterol_mg} mg</p>
-                  <p>Total Fat: {result.nutrition.fat_total_g} g</p>
-                  <p>Saturated Fat: {result.nutrition.fat_saturated_g} g</p>
-                  <p>Fiber: {result.nutrition.fiber_g} g</p>
-                  <p>Potassium: {result.nutrition.potassium_mg} mg</p>
-                  <p>Protein: {result.nutrition.protein_g} g</p>
-                  <p>Serving Size: {result.nutrition.serving_size_g} g</p>
-                  <p>Sodium: {result.nutrition.sodium_mg} mg</p>
-                  <p>Sugar: {result.nutrition.sugar_g} g</p>
+                <table className="mt-2 text-center text-gray-600 w-full">
+                  <thead>
+                    <tr>
+                      <th>Nutrient</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Food Name</td>
+                      <td>{result.food_name}</td>
+                    </tr>
+                    <tr>
+                      <td>Calories</td>
+                      <td>{result.nutrition.calories}</td>
+                    </tr>
+                    <tr>
+                      <td>Carbohydrates</td>
+                      <td>{result.nutrition.carbohydrates_total_g} g</td>
+                    </tr>
+                    <tr>
+                      <td>Cholesterol</td>
+                      <td>{result.nutrition.cholesterol_mg} mg</td>
+                    </tr>
+                    <tr>
+                      <td>Total Fat</td>
+                      <td>{result.nutrition.fat_total_g} g</td>
+                    </tr>
+                    <tr>
+                      <td>Saturated Fat</td>
+                      <td>{result.nutrition.fat_saturated_g} g</td>
+                    </tr>
+                    <tr>
+                      <td>Fiber</td>
+                      <td>{result.nutrition.fiber_g} g</td>
+                    </tr>
+                    <tr>
+                      <td>Potassium</td>
+                      <td>{result.nutrition.potassium_mg} mg</td>
+                    </tr>
+                    <tr>
+                      <td>Protein</td>
+                      <td>{result.nutrition.protein_g} g</td>
+                    </tr>
+                    <tr>
+                      <td>Serving Size</td>
+                      <td>{result.nutrition.serving_size_g} g</td>
+                    </tr>
+                    <tr>
+                      <td>Sodium</td>
+                      <td>{result.nutrition.sodium_mg} mg</td>
+                    </tr>
+                    <tr>
+                      <td>Sugar</td>
+                      <td>{result.nutrition.sugar_g} g</td>
+                    </tr>
+                  </tbody>
+                </table>
                 </div>
-              </div>
             )}
           </form>
 
