@@ -49,16 +49,19 @@ export default function Home() {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
             const data = response.data;
             if (data.status === 'success') {
                 setLoading(false);
                 setResult(data);
+            } else if (data.status === 'error') {
+                setError(data.message);
+                setResult(null);
+                setLoading(false);
             }
             setResult(data);
             setError(null);
         } catch (error) {
-            setError('Error recognizing the food item. Please try again.', error);
+            setError(error.response.data.message);
             setResult(null);
             setLoading(false);
         }
