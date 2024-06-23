@@ -4,16 +4,23 @@ import requests
 import numpy as np
 from PIL import Image
 from io import BytesIO
+import logging
+
+from bs4 import BeautifulSoup
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+
 load_dotenv()
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
+
+logger = logging.getLogger('uvicorn.error')
+logger.setLevel(logging.DEBUG)
 
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -74,7 +81,9 @@ food_labels = {
 }
 
 API_URL = os.getenv('API_URL')
+API_FDC_URL = os.getenv('API_FDC_URL')
 API_KEY = os.getenv('API_KEY')
+API_FDC_KEY = os.getenv('API_FDC_KEY')
 
 
 @app.get("/")
@@ -92,7 +101,7 @@ async def predict_food(file: UploadFile = File(...)):
         # Read the image file
         contents = await file.read()
         img = Image.open(BytesIO(contents)).convert('RGB')  # Convert image to RGB
-        
+
         # Resize the image to match the input size expected by the model
         img = img.resize((224, 224))
 
@@ -132,6 +141,15 @@ async def predict_food(file: UploadFile = File(...)):
                 "message": "Calorie information not found."
             })
 
+        # Check and replace string values in nutrition with Google values
+        for key, value in calories[0].items():
+            if isinstance(value, str) and value.lower() == "only available for premium subscribers.":
+                google_values = get_nutrition_from_google(food_name)
+                # calories[0]['calories'] = google_values.get('calories', calories[0]['calories'])
+                calories[0]['calories'] = calories[0]['calories']
+                calories[0]['serving_size_g'] = google_values.get('serving_size_g', calories[0]['serving_size_g'])
+                calories[0]['protein_g'] = google_values.get('protein_g', calories[0]['protein_g'])
+
         return {
             "status": "success",
             "message": "Food item recognized successfully.",
@@ -155,7 +173,45 @@ def get_calories_from_api(food_name):
         print(f"Error while querying API: {str(e)}")
 
 
+def get_nutrition_from_fdc(food_name):
+    try:
+        query = f'{food_name}'
+        api_url = f'{API_URL}?query={query}&api_key={API_FDC_URL}'
+        response = requests.get(api_url)
+        if response.status_code == requests.codes.ok:
+            data = response.json()
+            return data
+    except Exception as e:
+        print(f"Error while querying API from FDC: {str(e)}")
+
+
+def get_nutrition_from_google(food_name):
+    try:
+        url = f'https://www.google.com/search?q=calories+in+{food_name}'
+        req = requests.get(url).text
+        soup = BeautifulSoup(req, 'html.parser')
+
+        # Find calorie information
+        calories = soup.find('div', class_='BNeawe s3v9rd AP7Wnd').text
+        serving_size = 100
+
+        # Find protein information
+        url_protein = f'https://www.google.com/search?q=protein+in+{food_name}'
+        req_protein = requests.get(url_protein).text
+        soup_protein = BeautifulSoup(req_protein, 'html.parser')
+        protein_info = soup_protein.find('div', class_='BNeawe iBp4i AP7Wnd').text
+
+        return {
+            "calories": calories,
+            "serving_size_g": serving_size,
+            "protein_g": protein_info
+        }
+    except Exception as e:
+        print(f"Error while scraping Google: {str(e)}")
+        return {}
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=9000)
