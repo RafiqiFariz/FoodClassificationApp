@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import 'flowbite';
 
 const inter = Inter({ subsets: ["latin"] });
 
