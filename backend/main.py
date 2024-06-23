@@ -54,7 +54,23 @@ food_labels = {
     16: "kiwi",
     17: "lemon",
     18: "lettuce",
-    19: "mango"
+    19: "mango",
+    20: "onion",
+    21: "orange",
+    22: "paprika",
+    23: "pear",
+    24: "peas",
+    25: "pineapple",
+    26: "pomegranate",
+    27: "potato",
+    28: "raddish",
+    29: "soy beans",
+    30: "spinach",
+    31: "sweetcorn",
+    32: "sweetpotato",
+    33: "tomato",
+    34: "turnip",
+    35: "watermelon",
 }
 
 API_URL = os.getenv('API_URL')
